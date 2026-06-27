@@ -90,6 +90,8 @@ public class ClientHandler implements Runnable, RoomListener {
             send(ProtocolMessage.of(Command.ERROR, "MESSAGE_TOO_LONG", e.getMessage()));
         } catch (UserNotConnectedException e) {
             send(ProtocolMessage.of(Command.ERROR, "USER_NOT_CONNECTED", e.getMessage()));
+        } catch (MessagingPausedException e) {
+            send(ProtocolMessage.of(Command.ERROR, "SERVER_PAUSED", e.getMessage()));
         } catch (RuntimeException e) {
             LOGGER.log(Level.WARNING, "Mensaje mal formado de " + socket.getRemoteSocketAddress(), e);
             send(ProtocolMessage.of(Command.ERROR, "MALFORMED_MESSAGE", message.getCommand().name()));
@@ -180,6 +182,7 @@ public class ClientHandler implements Runnable, RoomListener {
 
     private void handleRoomMsg(ProtocolMessage message) {
         requireLogin();
+        requireMessagingNotPaused();
         Room room = server.getRoomManager().getRoom(message.arg(0));
         room.post(loggedInUsername, message.arg(1));
         LOGGER.info(loggedInUsername + " envio un mensaje en el salon " + room.getName());
@@ -198,6 +201,7 @@ public class ClientHandler implements Runnable, RoomListener {
 
     private void handlePrivateMsg(ProtocolMessage message) {
         requireLogin();
+        requireMessagingNotPaused();
         String targetUsername = message.arg(0);
         String content = message.arg(1);
 
@@ -220,6 +224,12 @@ public class ClientHandler implements Runnable, RoomListener {
     private void requireLogin() {
         if (loggedInUsername == null) {
             throw new NotLoggedInException();
+        }
+    }
+
+    private void requireMessagingNotPaused() {
+        if (server.isMessagingPaused()) {
+            throw new MessagingPausedException();
         }
     }
 

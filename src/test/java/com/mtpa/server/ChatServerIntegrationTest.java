@@ -176,6 +176,49 @@ class ChatServerIntegrationTest {
     }
 
     @Test
+    void rechazaMensajesDeSalonCuandoLaMensajeriaEstaPausada() throws IOException {
+        try (Socket socket = new Socket("localhost", server.getLocalPort());
+             BufferedReader in = reader(socket);
+             PrintWriter out = writer(socket)) {
+
+            registerAndLogin(out, in, "dana321");
+            out.println("JOIN_ROOM|IA");
+            in.readLine(); // USER_JOINED
+            in.readLine(); // END_HISTORY
+
+            server.setMessagingPaused(true);
+            out.println("ROOM_MSG|IA|hola?");
+            String response = in.readLine();
+
+            assertTrue(response.startsWith("ERROR|SERVER_PAUSED|"));
+        } finally {
+            server.setMessagingPaused(false);
+        }
+    }
+
+    @Test
+    void rechazaMensajesPrivadosCuandoLaMensajeriaEstaPausada() throws IOException {
+        try (Socket socketAna = new Socket("localhost", server.getLocalPort());
+             BufferedReader inAna = reader(socketAna);
+             PrintWriter outAna = writer(socketAna);
+             Socket socketBob = new Socket("localhost", server.getLocalPort());
+             BufferedReader inBob = reader(socketBob);
+             PrintWriter outBob = writer(socketBob)) {
+
+            registerAndLogin(outAna, inAna, "ana123");
+            registerAndLogin(outBob, inBob, "bob456");
+
+            server.setMessagingPaused(true);
+            outAna.println("PRIVATE_MSG|bob456|hola?");
+            String response = inAna.readLine();
+
+            assertTrue(response.startsWith("ERROR|SERVER_PAUSED|"));
+        } finally {
+            server.setMessagingPaused(false);
+        }
+    }
+
+    @Test
     void enviaUnMensajePrivadoAUnUsuarioConectado() throws IOException {
         try (Socket socketAna = new Socket("localhost", server.getLocalPort());
              BufferedReader inAna = reader(socketAna);

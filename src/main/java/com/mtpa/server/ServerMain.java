@@ -16,9 +16,16 @@ public class ServerMain {
 
         ChatServer server = new ChatServer(port);
         try {
-            server.start();
+            server.bind();
         } catch (IOException e) {
             logger.severe("No se pudo iniciar el servidor: " + e.getMessage());
+            return;
         }
+
+        Thread acceptThread = new Thread(server::acceptLoop, "accept-loop");
+        acceptThread.setDaemon(true);
+        acceptThread.start();
+
+        new AdminConsole(server).run();
     }
 }

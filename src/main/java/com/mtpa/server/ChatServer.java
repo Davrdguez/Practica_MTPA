@@ -37,6 +37,7 @@ public class ChatServer {
         return thread;
     });
     private volatile boolean acceptingClients = true;
+    private volatile boolean messagingPaused = false;
     private ServerSocket serverSocket;
 
     public ChatServer(int port) {
@@ -141,6 +142,14 @@ public class ChatServer {
 
     public void setAcceptingClients(boolean acceptingClients) {
         this.acceptingClients = acceptingClients;
+    }
+
+    public boolean isMessagingPaused() {
+        return messagingPaused;
+    }
+
+    public void setMessagingPaused(boolean messagingPaused) {
+        this.messagingPaused = messagingPaused;
     }
 
     private void closeQuietly(Socket socket) {
