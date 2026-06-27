@@ -6,3 +6,8 @@ target/
 *.iml
 .DS_Store
 Thumbs.db
+
+# Datos generados al ejecutar el servidor localmente durante el desarrollo.
+# Antes de la entrega final se debe generar y commitear un dataset de ejemplo real
+# (el enunciado exige entregar los "Ficheros de persistencia").
+/data/

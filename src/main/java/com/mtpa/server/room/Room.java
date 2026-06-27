@@ -28,6 +28,11 @@ public class Room {
         return name;
     }
 
+    /** Suscribe un oyente permanente (p.ej. persistencia) sin contarlo como usuario activo. */
+    public void addListener(RoomListener listener) {
+        listeners.add(listener);
+    }
+
     public void join(String username, RoomListener listener) {
         activeUsernames.add(username);
         listeners.add(listener);

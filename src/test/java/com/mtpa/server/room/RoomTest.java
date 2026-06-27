@@ -49,6 +49,17 @@ class RoomTest {
     }
 
     @Test
+    void unOyentePersistenteRecibeMensajesSinContarComoUsuarioActivo() {
+        RecordingListener listener = new RecordingListener();
+        room.addListener(listener);
+
+        room.post("ana", "hola");
+
+        assertEquals(1, listener.messages.size());
+        assertEquals(0, room.activeUserCount());
+    }
+
+    @Test
     void notificaLaEntradaYSalidaDeUsuariosAlRestoDeOyentes() {
         RecordingListener anaListener = new RecordingListener();
         RecordingListener bobListener = new RecordingListener();

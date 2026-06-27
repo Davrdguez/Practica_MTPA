@@ -3,6 +3,7 @@ package com.mtpa.server;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -17,11 +19,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ChatServerIntegrationTest {
 
+    @TempDir
+    Path dataDir;
+
     private ChatServer server;
 
     @BeforeEach
     void startServer() throws IOException {
-        server = new ChatServer(0); // puerto 0 = el sistema operativo asigna uno libre
+        server = new ChatServer(0, dataDir); // puerto 0 = el SO asigna uno libre; dataDir aislado por test
         server.bind();
 
         Thread serverThread = new Thread(server::acceptLoop, "test-server-loop");

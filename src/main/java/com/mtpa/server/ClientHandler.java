@@ -107,11 +107,15 @@ public class ClientHandler implements Runnable, RoomListener {
         String username = message.arg(0);
         try {
             User user = server.getUserRegistry().register(username);
+            server.getPersistence().getUserFileStore().append(user);
             send(ProtocolMessage.of(Command.OK, "REGISTER", user.getUsername(), String.valueOf(user.getAccessKey())));
         } catch (InvalidUsernameException e) {
             send(ProtocolMessage.of(Command.ERROR, "INVALID_USERNAME", e.getMessage()));
         } catch (UsernameAlreadyExistsException e) {
             send(ProtocolMessage.of(Command.ERROR, "USERNAME_TAKEN", e.getMessage()));
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "No se pudo persistir el usuario " + username, e);
+            send(ProtocolMessage.of(Command.ERROR, "INTERNAL_ERROR", "No se pudo guardar el usuario"));
         }
     }
 

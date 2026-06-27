@@ -62,4 +62,14 @@ class UserRegistryTest {
     void rechazaLoginConUsuarioInexistente() {
         assertThrows(InvalidCredentialsException.class, () -> registry.login("fantasma", 1000L));
     }
+
+    @Test
+    void restaurarUnUsuarioAvanzaElContadorDeClavesParaEvitarColisiones() {
+        registry.restore(new User("restaurado", 5000L));
+
+        User nuevo = registry.register("nuevoUser");
+
+        assertTrue(nuevo.getAccessKey() > 5000L);
+        assertTrue(registry.exists("restaurado"));
+    }
 }

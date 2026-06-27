@@ -30,6 +30,12 @@ public class UserRegistry {
         return user;
     }
 
+    /** Repone un usuario ya existente (cargado de persistencia) sin validar ni reasignar clave. */
+    public void restore(User user) {
+        usersByUsername.put(user.getUsername(), user);
+        nextAccessKey.updateAndGet(current -> Math.max(current, user.getAccessKey() + 1));
+    }
+
     public User login(String username, long accessKey) {
         User user = username == null ? null : usersByUsername.get(username);
         if (user == null || user.getAccessKey() != accessKey) {

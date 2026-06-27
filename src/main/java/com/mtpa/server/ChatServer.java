@@ -1,11 +1,13 @@
 package com.mtpa.server;
 
+import com.mtpa.server.persistence.PersistenceManager;
 import com.mtpa.server.room.RoomManager;
 import com.mtpa.server.user.UserRegistry;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Path;
 import java.util.logging.Logger;
 
 /**
@@ -14,15 +16,23 @@ import java.util.logging.Logger;
 public class ChatServer {
 
     private static final Logger LOGGER = Logger.getLogger(ChatServer.class.getName());
+    private static final Path DEFAULT_DATA_DIR = Path.of("data");
 
     private final int port;
     private final UserRegistry userRegistry = new UserRegistry();
     private final RoomManager roomManager = new RoomManager();
+    private final PersistenceManager persistence;
     private volatile boolean acceptingClients = true;
     private ServerSocket serverSocket;
 
     public ChatServer(int port) {
+        this(port, DEFAULT_DATA_DIR);
+    }
+
+    public ChatServer(int port, Path dataDir) {
         this.port = port;
+        this.persistence = new PersistenceManager(dataDir);
+        persistence.loadInto(userRegistry, roomManager);
     }
 
     public UserRegistry getUserRegistry() {
@@ -31,6 +41,10 @@ public class ChatServer {
 
     public RoomManager getRoomManager() {
         return roomManager;
+    }
+
+    public PersistenceManager getPersistence() {
+        return persistence;
     }
 
     public void bind() throws IOException {
