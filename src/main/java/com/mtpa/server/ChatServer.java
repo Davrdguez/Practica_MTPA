@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
@@ -22,6 +25,7 @@ public class ChatServer {
     private final UserRegistry userRegistry = new UserRegistry();
     private final RoomManager roomManager = new RoomManager();
     private final PersistenceManager persistence;
+    private final Map<String, ClientHandler> onlineUsers = new ConcurrentHashMap<>();
     private volatile boolean acceptingClients = true;
     private ServerSocket serverSocket;
 
@@ -45,6 +49,24 @@ public class ChatServer {
 
     public PersistenceManager getPersistence() {
         return persistence;
+    }
+
+    public void registerOnline(String username, ClientHandler handler) {
+        onlineUsers.put(username, handler);
+    }
+
+    public void unregisterOnline(String username) {
+        if (username != null) {
+            onlineUsers.remove(username);
+        }
+    }
+
+    public Optional<ClientHandler> findOnline(String username) {
+        return Optional.ofNullable(onlineUsers.get(username));
+    }
+
+    public int onlineUserCount() {
+        return onlineUsers.size();
     }
 
     public void bind() throws IOException {

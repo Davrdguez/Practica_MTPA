@@ -21,6 +21,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -61,6 +62,7 @@ public class ClientHandler implements Runnable, RoomListener {
             LOGGER.log(Level.INFO, "Conexion interrumpida con " + socket.getRemoteSocketAddress(), e);
         } finally {
             leaveAllRooms();
+            server.unregisterOnline(loggedInUsername);
             closeQuietly();
             LOGGER.info("Cliente desconectado: " + socket.getRemoteSocketAddress());
         }
@@ -83,6 +85,8 @@ public class ClientHandler implements Runnable, RoomListener {
             send(ProtocolMessage.of(Command.ERROR, "ROOM_NOT_FOUND", e.getMessage()));
         } catch (MessageTooLongException e) {
             send(ProtocolMessage.of(Command.ERROR, "MESSAGE_TOO_LONG", e.getMessage()));
+        } catch (UserNotConnectedException e) {
+            send(ProtocolMessage.of(Command.ERROR, "USER_NOT_CONNECTED", e.getMessage()));
         } catch (RuntimeException e) {
             LOGGER.log(Level.WARNING, "Mensaje mal formado de " + socket.getRemoteSocketAddress(), e);
             send(ProtocolMessage.of(Command.ERROR, "MALFORMED_MESSAGE", message.getCommand().name()));
@@ -99,6 +103,8 @@ public class ClientHandler implements Runnable, RoomListener {
             case LEAVE_ROOM -> handleLeaveRoom(message);
             case ROOM_MSG -> handleRoomMsg(message);
             case HISTORY_REQUEST -> handleHistoryRequest(message);
+            case PRIVATE_MSG -> handlePrivateMsg(message);
+            case PRIVATE_CLOSE -> handlePrivateClose(message);
             default -> send(ProtocolMessage.of(Command.OK, message.getCommand().name()));
         }
     }
@@ -125,6 +131,7 @@ public class ClientHandler implements Runnable, RoomListener {
             long accessKey = Long.parseLong(message.arg(1));
             server.getUserRegistry().login(username, accessKey);
             loggedInUsername = username;
+            server.registerOnline(username, this);
             send(ProtocolMessage.of(Command.OK, "LOGIN", username));
         } catch (NumberFormatException | InvalidCredentialsException e) {
             send(ProtocolMessage.of(Command.ERROR, "INVALID_CREDENTIALS", "Usuario o clave incorrectos"));
@@ -175,6 +182,26 @@ public class ClientHandler implements Runnable, RoomListener {
             send(toRoomMsgEvent(history));
         }
         send(ProtocolMessage.of(Command.END_HISTORY, room.getName()));
+    }
+
+    private void handlePrivateMsg(ProtocolMessage message) {
+        requireLogin();
+        String targetUsername = message.arg(0);
+        String content = message.arg(1);
+
+        ClientHandler targetHandler = server.findOnline(targetUsername)
+                .orElseThrow(() -> new UserNotConnectedException(targetUsername));
+
+        targetHandler.send(ProtocolMessage.of(Command.PRIVATE_MSG_EVENT, loggedInUsername,
+                LocalDateTime.now().toString(), content));
+    }
+
+    private void handlePrivateClose(ProtocolMessage message) {
+        requireLogin();
+        String targetUsername = message.arg(0);
+
+        server.findOnline(targetUsername)
+                .ifPresent(handler -> handler.send(ProtocolMessage.of(Command.PRIVATE_CLOSED, loggedInUsername)));
     }
 
     private void requireLogin() {

@@ -146,6 +146,60 @@ class ChatServerIntegrationTest {
         }
     }
 
+    @Test
+    void enviaUnMensajePrivadoAUnUsuarioConectado() throws IOException {
+        try (Socket socketAna = new Socket("localhost", server.getLocalPort());
+             BufferedReader inAna = reader(socketAna);
+             PrintWriter outAna = writer(socketAna);
+             Socket socketBob = new Socket("localhost", server.getLocalPort());
+             BufferedReader inBob = reader(socketBob);
+             PrintWriter outBob = writer(socketBob)) {
+
+            registerAndLogin(outAna, inAna, "ana123");
+            registerAndLogin(outBob, inBob, "bob456");
+
+            outAna.println("PRIVATE_MSG|bob456|hola en privado");
+            String recibidoPorBob = inBob.readLine();
+
+            assertTrue(recibidoPorBob.startsWith("PRIVATE_MSG_EVENT|ana123|"));
+            assertTrue(recibidoPorBob.endsWith("|hola en privado"));
+        }
+    }
+
+    @Test
+    void rechazaUnMensajePrivadoAUnUsuarioNoConectado() throws IOException {
+        try (Socket socket = new Socket("localhost", server.getLocalPort());
+             BufferedReader in = reader(socket);
+             PrintWriter out = writer(socket)) {
+
+            registerAndLogin(out, in, "ana123");
+
+            out.println("PRIVATE_MSG|fantasma|hola?");
+            String response = in.readLine();
+
+            assertEquals("ERROR|USER_NOT_CONNECTED|fantasma no esta conectado", response);
+        }
+    }
+
+    @Test
+    void avisaAlOtroUsuarioCuandoSeCierraLaVentanaPrivada() throws IOException {
+        try (Socket socketAna = new Socket("localhost", server.getLocalPort());
+             BufferedReader inAna = reader(socketAna);
+             PrintWriter outAna = writer(socketAna);
+             Socket socketBob = new Socket("localhost", server.getLocalPort());
+             BufferedReader inBob = reader(socketBob);
+             PrintWriter outBob = writer(socketBob)) {
+
+            registerAndLogin(outAna, inAna, "ana123");
+            registerAndLogin(outBob, inBob, "bob456");
+
+            outAna.println("PRIVATE_CLOSE|bob456");
+            String response = inBob.readLine();
+
+            assertEquals("PRIVATE_CLOSED|ana123", response);
+        }
+    }
+
     private BufferedReader reader(Socket socket) throws IOException {
         return new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
     }
