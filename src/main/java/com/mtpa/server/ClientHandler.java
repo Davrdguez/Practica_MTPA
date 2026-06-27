@@ -138,16 +138,20 @@ public class ClientHandler implements Runnable, RoomListener {
             server.registerOnline(username, this);
             LOGGER.info("Login correcto: " + username);
             send(ProtocolMessage.of(Command.OK, "LOGIN", username));
+            send(ProtocolMessage.of(Command.ROOM_LIST, roomListSummary()));
         } catch (NumberFormatException | InvalidCredentialsException e) {
             send(ProtocolMessage.of(Command.ERROR, "INVALID_CREDENTIALS", "Usuario o clave incorrectos"));
         }
     }
 
     private void handleListRooms() {
-        String summary = server.getRoomManager().allRooms().stream()
+        send(ProtocolMessage.of(Command.ROOM_LIST, roomListSummary()));
+    }
+
+    private String roomListSummary() {
+        return server.getRoomManager().allRooms().stream()
                 .map(room -> room.getName() + ":" + room.activeUserCount())
                 .collect(Collectors.joining(","));
-        send(ProtocolMessage.of(Command.ROOM_LIST, summary));
     }
 
     private void handleJoinRoom(ProtocolMessage message) {

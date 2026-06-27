@@ -243,6 +243,7 @@ class ChatServerIntegrationTest {
         String accessKey = registerResponse.substring(registerResponse.lastIndexOf('|') + 1);
 
         out.println("LOGIN|" + username + "|" + accessKey);
-        in.readLine();
+        in.readLine(); // OK|LOGIN|username
+        in.readLine(); // ROOM_LIST|... (enviada automaticamente tras el login)
     }
 }

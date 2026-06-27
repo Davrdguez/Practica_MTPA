@@ -39,7 +39,8 @@ class PersistenceIntegrationTest {
             accessKey = Long.parseLong(registerResponse.substring(registerResponse.lastIndexOf('|') + 1));
 
             out.println("LOGIN|persistente1|" + accessKey);
-            in.readLine();
+            in.readLine(); // OK|LOGIN
+            in.readLine(); // ROOM_LIST
 
             out.println("JOIN_ROOM|IA");
             in.readLine(); // USER_JOINED
@@ -61,6 +62,7 @@ class PersistenceIntegrationTest {
 
             out.println("LOGIN|persistente1|" + accessKey); // sin volver a registrarse
             assertEquals("OK|LOGIN|persistente1", in.readLine());
+            in.readLine(); // ROOM_LIST
 
             out.println("JOIN_ROOM|IA");
             in.readLine(); // USER_JOINED

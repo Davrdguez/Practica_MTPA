@@ -1,11 +1,13 @@
 target/
 *.class
-*.log
 .vscode/
 .idea/
 *.iml
 .DS_Store
 Thumbs.db
+
+# Logs generados al ejecutar cliente/servidor localmente.
+/logs/
 
 # Datos generados al ejecutar el servidor localmente durante el desarrollo.
 # Antes de la entrega final se debe generar y commitear un dataset de ejemplo real

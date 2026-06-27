@@ -1,5 +1,7 @@
 package com.mtpa.server.room;
 
+import com.mtpa.common.Protocol;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,7 +15,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public class Room {
 
-    public static final int MAX_MESSAGE_LENGTH = 190;
+    public static final int MAX_MESSAGE_LENGTH = Protocol.MAX_ROOM_MESSAGE_LENGTH;
 
     private final String name;
     private final List<ChatMessage> messages = new CopyOnWriteArrayList<>();

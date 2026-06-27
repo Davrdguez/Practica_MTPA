@@ -25,11 +25,10 @@ public final class LoggingConfig {
 
             FileHandler fileHandler = new FileHandler(logsDir.resolve(logFileName).toString(), true);
             fileHandler.setFormatter(new SimpleFormatter());
-            fileHandler.setLevel(Level.ALL);
 
-            Logger rootLogger = Logger.getLogger("");
-            rootLogger.addHandler(fileHandler);
-            rootLogger.setLevel(Level.ALL);
+            // Solo se añade el manejador a fichero; el nivel se deja en el INFO por
+            // defecto para no activar el logging interno (muy verboso) de AWT/Swing.
+            Logger.getLogger("").addHandler(fileHandler);
         } catch (IOException e) {
             Logger.getLogger(LoggingConfig.class.getName())
                     .log(Level.SEVERE, "No se pudo configurar el log en fichero", e);
