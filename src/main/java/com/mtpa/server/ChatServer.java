@@ -113,7 +113,9 @@ public class ChatServer {
             }
 
             ClientHandler handler = new ClientHandler(socket, this);
-            new Thread(handler, "client-" + socket.getRemoteSocketAddress()).start();
+            Thread thread = new Thread(handler, "client-" + socket.getRemoteSocketAddress());
+            thread.setDaemon(true);
+            thread.start();
         }
     }
 

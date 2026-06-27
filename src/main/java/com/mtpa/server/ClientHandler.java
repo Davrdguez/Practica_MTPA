@@ -117,6 +117,7 @@ public class ClientHandler implements Runnable, RoomListener {
         try {
             User user = server.getUserRegistry().register(username);
             server.getPersistence().getUserFileStore().append(user);
+            LOGGER.info("Usuario registrado: " + username);
             send(ProtocolMessage.of(Command.OK, "REGISTER", user.getUsername(), String.valueOf(user.getAccessKey())));
         } catch (InvalidUsernameException e) {
             send(ProtocolMessage.of(Command.ERROR, "INVALID_USERNAME", e.getMessage()));
@@ -135,6 +136,7 @@ public class ClientHandler implements Runnable, RoomListener {
             server.getUserRegistry().login(username, accessKey);
             loggedInUsername = username;
             server.registerOnline(username, this);
+            LOGGER.info("Login correcto: " + username);
             send(ProtocolMessage.of(Command.OK, "LOGIN", username));
         } catch (NumberFormatException | InvalidCredentialsException e) {
             send(ProtocolMessage.of(Command.ERROR, "INVALID_CREDENTIALS", "Usuario o clave incorrectos"));
@@ -154,6 +156,7 @@ public class ClientHandler implements Runnable, RoomListener {
 
         room.join(loggedInUsername, this);
         joinedRooms.add(room);
+        LOGGER.info(loggedInUsername + " se ha unido al salon " + room.getName());
 
         for (ChatMessage history : room.lastDayMessages()) {
             send(toRoomMsgEvent(history));
@@ -167,6 +170,7 @@ public class ClientHandler implements Runnable, RoomListener {
 
         room.leave(loggedInUsername, this);
         joinedRooms.remove(room);
+        LOGGER.info(loggedInUsername + " ha abandonado el salon " + room.getName());
         send(ProtocolMessage.of(Command.OK, "LEAVE_ROOM", room.getName()));
     }
 
@@ -174,6 +178,7 @@ public class ClientHandler implements Runnable, RoomListener {
         requireLogin();
         Room room = server.getRoomManager().getRoom(message.arg(0));
         room.post(loggedInUsername, message.arg(1));
+        LOGGER.info(loggedInUsername + " envio un mensaje en el salon " + room.getName());
     }
 
     private void handleHistoryRequest(ProtocolMessage message) {
@@ -197,6 +202,7 @@ public class ClientHandler implements Runnable, RoomListener {
 
         targetHandler.send(ProtocolMessage.of(Command.PRIVATE_MSG_EVENT, loggedInUsername,
                 LocalDateTime.now().toString(), content));
+        LOGGER.info(loggedInUsername + " envio un mensaje privado a " + targetUsername);
     }
 
     private void handlePrivateClose(ProtocolMessage message) {
