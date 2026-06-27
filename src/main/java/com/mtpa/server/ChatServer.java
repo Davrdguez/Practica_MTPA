@@ -1,5 +1,6 @@
 package com.mtpa.server;
 
+import com.mtpa.server.room.RoomManager;
 import com.mtpa.server.user.UserRegistry;
 
 import java.io.IOException;
@@ -16,6 +17,7 @@ public class ChatServer {
 
     private final int port;
     private final UserRegistry userRegistry = new UserRegistry();
+    private final RoomManager roomManager = new RoomManager();
     private volatile boolean acceptingClients = true;
     private ServerSocket serverSocket;
 
@@ -25,6 +27,10 @@ public class ChatServer {
 
     public UserRegistry getUserRegistry() {
         return userRegistry;
+    }
+
+    public RoomManager getRoomManager() {
+        return roomManager;
     }
 
     public void bind() throws IOException {

@@ -92,4 +92,69 @@ class ChatServerIntegrationTest {
             assertEquals("ERROR|INVALID_CREDENTIALS|Usuario o clave incorrectos", response);
         }
     }
+
+    @Test
+    void dosClientesEnElMismoSalonRecibenLosMensajesDelOtro() throws IOException {
+        try (Socket socketAna = new Socket("localhost", server.getLocalPort());
+             BufferedReader inAna = reader(socketAna);
+             PrintWriter outAna = writer(socketAna);
+             Socket socketBob = new Socket("localhost", server.getLocalPort());
+             BufferedReader inBob = reader(socketBob);
+             PrintWriter outBob = writer(socketBob)) {
+
+            registerAndLogin(outAna, inAna, "ana123");
+            registerAndLogin(outBob, inBob, "bob456");
+
+            outAna.println("JOIN_ROOM|IA");
+            assertEquals("USER_JOINED|IA|ana123", inAna.readLine());
+            assertEquals("END_HISTORY|IA", inAna.readLine());
+
+            outBob.println("JOIN_ROOM|IA");
+            assertEquals("USER_JOINED|IA|bob456", inAna.readLine()); // ana se entera de que bob ha entrado
+            assertEquals("USER_JOINED|IA|bob456", inBob.readLine());
+            assertEquals("END_HISTORY|IA", inBob.readLine());
+
+            outAna.println("ROOM_MSG|IA|hola a todos");
+
+            String recibidoPorAna = inAna.readLine();
+            String recibidoPorBob = inBob.readLine();
+
+            assertTrue(recibidoPorAna.startsWith("ROOM_MSG_EVENT|IA|ana123|"));
+            assertTrue(recibidoPorAna.endsWith("|hola a todos"));
+            assertEquals(recibidoPorAna, recibidoPorBob);
+        }
+    }
+
+    @Test
+    void rechazaUnMensajeDeSalonDemasiadoLargo() throws IOException {
+        try (Socket socket = new Socket("localhost", server.getLocalPort());
+             BufferedReader in = reader(socket);
+             PrintWriter out = writer(socket)) {
+
+            registerAndLogin(out, in, "carla789");
+
+            String tooLong = "a".repeat(191);
+            out.println("ROOM_MSG|IA|" + tooLong);
+            String response = in.readLine();
+
+            assertTrue(response.startsWith("ERROR|MESSAGE_TOO_LONG|"));
+        }
+    }
+
+    private BufferedReader reader(Socket socket) throws IOException {
+        return new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+    }
+
+    private PrintWriter writer(Socket socket) throws IOException {
+        return new PrintWriter(socket.getOutputStream(), true);
+    }
+
+    private void registerAndLogin(PrintWriter out, BufferedReader in, String username) throws IOException {
+        out.println("REGISTER|" + username);
+        String registerResponse = in.readLine();
+        String accessKey = registerResponse.substring(registerResponse.lastIndexOf('|') + 1);
+
+        out.println("LOGIN|" + username + "|" + accessKey);
+        in.readLine();
+    }
 }
