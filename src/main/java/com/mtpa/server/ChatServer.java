@@ -11,6 +11,9 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -20,12 +23,19 @@ public class ChatServer {
 
     private static final Logger LOGGER = Logger.getLogger(ChatServer.class.getName());
     private static final Path DEFAULT_DATA_DIR = Path.of("data");
+    private static final long HEARTBEAT_TIMEOUT_MILLIS = 90_000;
+    private static final long WATCHDOG_INTERVAL_SECONDS = 30;
 
     private final int port;
     private final UserRegistry userRegistry = new UserRegistry();
     private final RoomManager roomManager = new RoomManager();
     private final PersistenceManager persistence;
     private final Map<String, ClientHandler> onlineUsers = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService watchdog = Executors.newSingleThreadScheduledExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "heartbeat-watchdog");
+        thread.setDaemon(true);
+        return thread;
+    });
     private volatile boolean acceptingClients = true;
     private ServerSocket serverSocket;
 
@@ -72,6 +82,19 @@ public class ChatServer {
     public void bind() throws IOException {
         serverSocket = new ServerSocket(port);
         LOGGER.info("Servidor escuchando en el puerto " + serverSocket.getLocalPort());
+        watchdog.scheduleAtFixedRate(() -> disconnectStaleClients(HEARTBEAT_TIMEOUT_MILLIS),
+                WATCHDOG_INTERVAL_SECONDS, WATCHDOG_INTERVAL_SECONDS, TimeUnit.SECONDS);
+    }
+
+    /** Desconecta las sesiones que no han dado señales de vida (heartbeat u otro comando) en {@code timeoutMillis}. */
+    public void disconnectStaleClients(long timeoutMillis) {
+        long now = System.currentTimeMillis();
+        for (ClientHandler handler : onlineUsers.values()) {
+            if (now - handler.getLastActivityMillis() > timeoutMillis) {
+                LOGGER.info("Desconectando por inactividad (sin heartbeat) a " + handler);
+                handler.disconnect();
+            }
+        }
     }
 
     public void acceptLoop() {
@@ -100,6 +123,7 @@ public class ChatServer {
     }
 
     public void stop() throws IOException {
+        watchdog.shutdownNow();
         if (serverSocket != null && !serverSocket.isClosed()) {
             serverSocket.close();
         }

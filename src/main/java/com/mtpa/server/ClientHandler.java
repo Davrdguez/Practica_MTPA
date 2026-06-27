@@ -41,6 +41,7 @@ public class ClientHandler implements Runnable, RoomListener {
     private final Set<Room> joinedRooms = ConcurrentHashMap.newKeySet();
     private String loggedInUsername;
     private PrintWriter out;
+    private volatile long lastActivityMillis = System.currentTimeMillis();
 
     public ClientHandler(Socket socket, ChatServer server) {
         this.socket = socket;
@@ -69,6 +70,8 @@ public class ClientHandler implements Runnable, RoomListener {
     }
 
     private void handleLine(String line) {
+        lastActivityMillis = System.currentTimeMillis();
+
         ProtocolMessage message;
         try {
             message = ProtocolMessage.parse(line);
@@ -241,6 +244,15 @@ public class ClientHandler implements Runnable, RoomListener {
             room.leave(loggedInUsername, this);
         }
         joinedRooms.clear();
+    }
+
+    public long getLastActivityMillis() {
+        return lastActivityMillis;
+    }
+
+    /** Fuerza el cierre de la conexion (p.ej. por inactividad de heartbeat); el hilo propio hace su limpieza habitual. */
+    public void disconnect() {
+        closeQuietly();
     }
 
     private void closeQuietly() {

@@ -53,6 +53,35 @@ class ChatServerIntegrationTest {
     }
 
     @Test
+    void desconectaUnClienteSinActividadReciente() throws IOException {
+        try (Socket socket = new Socket("localhost", server.getLocalPort());
+             BufferedReader in = reader(socket);
+             PrintWriter out = writer(socket)) {
+
+            registerAndLogin(out, in, "inactivo1");
+
+            server.disconnectStaleClients(0); // simula que ha pasado mucho tiempo sin heartbeat
+
+            assertNull(in.readLine()); // el servidor ha cerrado la conexion
+        }
+    }
+
+    @Test
+    void noDesconectaUnClienteConActividadReciente() throws IOException {
+        try (Socket socket = new Socket("localhost", server.getLocalPort());
+             BufferedReader in = reader(socket);
+             PrintWriter out = writer(socket)) {
+
+            registerAndLogin(out, in, "activo1");
+
+            server.disconnectStaleClients(60_000); // margen amplio, la sesion es recien creada
+
+            out.println("HEARTBEAT");
+            assertEquals("HEARTBEAT_ACK", in.readLine());
+        }
+    }
+
+    @Test
     void rechazaNuevasConexionesCuandoElServidorNoAceptaClientes() throws IOException {
         server.setAcceptingClients(false);
 

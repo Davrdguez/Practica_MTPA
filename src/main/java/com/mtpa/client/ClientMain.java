@@ -9,6 +9,7 @@ public class ClientMain {
 
     private static final String DEFAULT_HOST = "localhost";
     private static final int DEFAULT_PORT = 5000;
+    private static final long HEARTBEAT_INTERVAL_SECONDS = 30;
 
     public static void main(String[] args) throws IOException {
         String host = args.length > 0 ? args[0] : DEFAULT_HOST;
@@ -17,6 +18,9 @@ public class ClientMain {
         ChatClient client = new ChatClient(host, port);
         client.connect();
         System.out.println("Conectado a " + host + ":" + port + ". Escribe lineas de protocolo (ej: HEARTBEAT) y pulsa Enter.");
+
+        HeartbeatSender heartbeatSender = new HeartbeatSender(client);
+        heartbeatSender.start(HEARTBEAT_INTERVAL_SECONDS);
 
         Thread listener = new Thread(() -> {
             try {
@@ -36,6 +40,8 @@ public class ClientMain {
         while ((userLine = stdIn.readLine()) != null) {
             client.send(userLine);
         }
+
+        heartbeatSender.stop();
 
         // Margen para que lleguen las respuestas pendientes antes de cerrar la conexion.
         try {
