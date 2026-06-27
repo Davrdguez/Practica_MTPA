@@ -1,5 +1,7 @@
 package com.mtpa.server;
 
+import com.mtpa.server.user.UserRegistry;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -13,11 +15,16 @@ public class ChatServer {
     private static final Logger LOGGER = Logger.getLogger(ChatServer.class.getName());
 
     private final int port;
+    private final UserRegistry userRegistry = new UserRegistry();
     private volatile boolean acceptingClients = true;
     private ServerSocket serverSocket;
 
     public ChatServer(int port) {
         this.port = port;
+    }
+
+    public UserRegistry getUserRegistry() {
+        return userRegistry;
     }
 
     public void bind() throws IOException {

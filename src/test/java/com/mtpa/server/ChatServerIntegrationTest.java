@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ChatServerIntegrationTest {
 
@@ -56,6 +57,39 @@ class ChatServerIntegrationTest {
             String response = in.readLine();
 
             assertNull(response); // el servidor cierra la conexion sin responder nada
+        }
+    }
+
+    @Test
+    void registraYLogueaUnUsuarioDeExtremoAExtremo() throws IOException {
+        try (Socket socket = new Socket("localhost", server.getLocalPort());
+             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+
+            out.println("REGISTER|ana123");
+            String registerResponse = in.readLine();
+            assertTrue(registerResponse.startsWith("OK|REGISTER|ana123|"));
+            String accessKey = registerResponse.substring(registerResponse.lastIndexOf('|') + 1);
+
+            out.println("LOGIN|ana123|" + accessKey);
+            String loginResponse = in.readLine();
+            assertEquals("OK|LOGIN|ana123", loginResponse);
+        }
+    }
+
+    @Test
+    void rechazaLoginConClaveIncorrectaPorSocket() throws IOException {
+        try (Socket socket = new Socket("localhost", server.getLocalPort());
+             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+
+            out.println("REGISTER|bob456");
+            in.readLine();
+
+            out.println("LOGIN|bob456|999999");
+            String response = in.readLine();
+
+            assertEquals("ERROR|INVALID_CREDENTIALS|Usuario o clave incorrectos", response);
         }
     }
 }
