@@ -35,10 +35,10 @@ Implementación de referencia: `com.mtpa.common.Command` y `com.mtpa.common.Prot
 |---|---|---|
 | `REGISTER` | `username` | Da de alta un usuario nuevo. El servidor responde `OK\|REGISTER\|username\|clave` con la clave autonumérica generada, o `ERROR` si el nombre ya existe. |
 | `LOGIN` | `username`, `clave` | Inicia sesión. Responde `OK\|LOGIN\|username` + `ROOM_LIST`, o `ERROR\|INVALID_CREDENTIALS`. |
-| `LOGOUT` | — | Cierra sesión de forma ordenada. |
+| `LOGOUT` | — | Cierra sesión de forma ordenada: abandona todos los salones (notificando `USER_LEFT`) y dejar de estar online, sin cerrar el socket. Responde `OK\|LOGOUT`. |
 | `LIST_ROOMS` | — | Pide la lista de salones. Responde `ROOM_LIST`. |
 | `JOIN_ROOM` | `sala` | Se une a un salón. Responde con el historial del último día y notifica `USER_JOINED` al resto de miembros. |
-| `LEAVE_ROOM` | `sala` | Abandona un salón. Notifica `USER_LEFT` al resto. |
+| `LEAVE_ROOM` | `sala` | Abandona un salón. Responde `OK\|LEAVE_ROOM\|sala` y notifica `USER_LEFT` al resto. |
 | `ROOM_MSG` | `sala`, `contenido` | Envía un mensaje al salón (máx. 190 caracteres). Se reenvía como `ROOM_MSG_EVENT` a todos los miembros conectados. |
 | `HISTORY_REQUEST` | `sala`, `antesDe` (fecha `yyyy-MM-dd`) | Pide los mensajes de días anteriores al indicado. Responde con `ROOM_MSG_EVENT`* + `END_HISTORY`. |
 | `PRIVATE_MSG` | `destinatario`, `contenido` | Mensaje privado. Sólo se entrega si el destinatario está conectado; si no, `ERROR\|USER_NOT_CONNECTED`. No se persiste. |
@@ -102,4 +102,6 @@ S: HEARTBEAT_ACK
 
 ## 7. Administración del servidor
 
-Los comandos de administración (dejar de aceptar clientes, pausar mensajería, mostrar estadísticas) **no forman parte de este protocolo de red**: se introducen directamente por consola en el proceso del servidor (entrada estándar), ya que el enunciado especifica que el servidor es una aplicación de consola en modo "administración". El único efecto visible para los clientes es, en su caso, recibir un `SERVER_SHUTDOWN_NOTICE` cuando el operador pausa la mensajería.
+Los comandos de administración (dejar de aceptar clientes, pausar mensajería, mostrar estadísticas) **no forman parte de este protocolo de red**: se introducen directamente por consola en el proceso del servidor (entrada estándar), ya que el enunciado especifica que el servidor es una aplicación de consola en modo "administración".
+
+El efecto visible para los clientes es siempre reactivo, no proactivo: mientras el operador tiene la mensajería pausada, cualquier intento de `ROOM_MSG` o `PRIVATE_MSG` recibe `ERROR|SERVER_PAUSED|...` en el momento del envío; los clientes ya conectados no reciben ningún aviso adicional en el instante en que se activa la pausa. `SERVER_SHUTDOWN_NOTICE` está reservado en el protocolo para un futuro aviso proactivo, pero el servidor no lo emite todavía.

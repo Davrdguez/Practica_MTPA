@@ -254,6 +254,36 @@ class ChatServerIntegrationTest {
     }
 
     @Test
+    void logoutAbandonaLosSalonesYDesconectaAlUsuarioDeOnlineUsers() throws IOException {
+        try (Socket socketAna = new Socket("localhost", server.getLocalPort());
+             BufferedReader inAna = reader(socketAna);
+             PrintWriter outAna = writer(socketAna);
+             Socket socketBob = new Socket("localhost", server.getLocalPort());
+             BufferedReader inBob = reader(socketBob);
+             PrintWriter outBob = writer(socketBob)) {
+
+            registerAndLogin(outAna, inAna, "ana123");
+            registerAndLogin(outBob, inBob, "bob456");
+
+            outAna.println("JOIN_ROOM|IA");
+            inAna.readLine(); // USER_JOINED|IA|ana123
+            inAna.readLine(); // END_HISTORY|IA
+
+            outBob.println("JOIN_ROOM|IA");
+            assertEquals("USER_JOINED|IA|bob456", inAna.readLine()); // ana se entera de que bob ha entrado
+            inBob.readLine(); // USER_JOINED|IA|bob456
+            inBob.readLine(); // END_HISTORY|IA
+
+            outAna.println("LOGOUT");
+            assertEquals("OK|LOGOUT", inAna.readLine());
+            assertEquals("USER_LEFT|IA|ana123", inBob.readLine());
+
+            assertEquals(1, server.onlineUserCount());
+            assertEquals(1, server.getRoomManager().getRoom("IA").activeUserCount());
+        }
+    }
+
+    @Test
     void avisaAlOtroUsuarioCuandoSeCierraLaVentanaPrivada() throws IOException {
         try (Socket socketAna = new Socket("localhost", server.getLocalPort());
              BufferedReader inAna = reader(socketAna);

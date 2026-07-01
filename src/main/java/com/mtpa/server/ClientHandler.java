@@ -103,6 +103,7 @@ public class ClientHandler implements Runnable, RoomListener {
             case HEARTBEAT -> send(ProtocolMessage.of(Command.HEARTBEAT_ACK));
             case REGISTER -> handleRegister(message);
             case LOGIN -> handleLogin(message);
+            case LOGOUT -> handleLogout();
             case LIST_ROOMS -> handleListRooms();
             case JOIN_ROOM -> handleJoinRoom(message);
             case LEAVE_ROOM -> handleLeaveRoom(message);
@@ -144,6 +145,15 @@ public class ClientHandler implements Runnable, RoomListener {
         } catch (NumberFormatException | InvalidCredentialsException e) {
             send(ProtocolMessage.of(Command.ERROR, "INVALID_CREDENTIALS", "Usuario o clave incorrectos"));
         }
+    }
+
+    private void handleLogout() {
+        requireLogin();
+        LOGGER.info("Logout: " + loggedInUsername);
+        leaveAllRooms();
+        server.unregisterOnline(loggedInUsername);
+        send(ProtocolMessage.of(Command.OK, "LOGOUT"));
+        loggedInUsername = null;
     }
 
     private void handleListRooms() {
