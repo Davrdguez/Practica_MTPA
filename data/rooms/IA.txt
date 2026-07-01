@@ -1,0 +1,3 @@
+2026-07-01T15:22:40.447343700|ana_ruiz|¿Alguien ha probado los nuevos modelos multimodales? La verdad es que sorprenden bastante.
+2026-07-01T15:22:40.515421300|carlos_dev|Yo ando liado integrando un LLM en el proyecto de clase, cualquier consejo es bienvenido
+2026-07-01T15:22:40.577968300|ana_ruiz|Yo usaria embeddings + un rerank sencillo, te ahorras muchos dolores de cabeza

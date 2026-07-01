@@ -9,7 +9,6 @@ Thumbs.db
 # Logs generados al ejecutar cliente/servidor localmente.
 /logs/
 
-# Datos generados al ejecutar el servidor localmente durante el desarrollo.
-# Antes de la entrega final se debe generar y commitear un dataset de ejemplo real
-# (el enunciado exige entregar los "Ficheros de persistencia").
-/data/
+# El directorio /data/ SI se versiona: contiene el dataset de ejemplo real
+# (usuarios y mensajes) que el enunciado exige entregar como "Ficheros de
+# persistencia" junto con el codigo fuente.
