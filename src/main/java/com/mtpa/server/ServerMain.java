@@ -5,6 +5,10 @@ import com.mtpa.common.LoggingConfig;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+/**
+ * Punto de entrada del servidor: arranca el {@link ChatServer} en un hilo de aceptacion
+ * y deja el hilo principal atendiendo la {@link AdminConsole} en modo consola.
+ */
 public class ServerMain {
 
     private static final int DEFAULT_PORT = 5000;

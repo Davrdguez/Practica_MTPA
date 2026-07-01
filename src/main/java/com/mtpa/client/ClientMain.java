@@ -9,6 +9,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Cliente de consola: conecta al servidor, envia heartbeats periodicos y permite
+ * escribir lineas de protocolo directamente por la entrada estandar.
+ */
 public class ClientMain {
 
     private static final Logger LOGGER = Logger.getLogger(ClientMain.class.getName());
