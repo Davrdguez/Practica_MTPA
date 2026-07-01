@@ -8,3 +8,5 @@ carlos_dev|1006
 keiko_therian|1007
 javi_futbol|1008
 diego_otaku|1009
+david|1010
+dapo|1011
